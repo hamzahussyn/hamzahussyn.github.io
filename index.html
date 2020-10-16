@@ -1,0 +1,221 @@
+<html>
+    <head>
+        <title>Bisection Method</title>
+
+        <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Barlow&family=Dosis:wght@300&family=Poppins&display=swap" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/7.5.1/math.min.js" integrity="sha512-6SHRAV8GhJ+3WvGPKQNsBpLj7J9QF9JFwH7nPSRLtH/OqFrlXRd54Z+QDgw7xj1f7dV8c50sKhZYr/xGPlMoiw==" crossorigin="anonymous"></script>
+
+
+        <script>
+            let equationGlobal = "";
+            let aGlobal;
+            let bGlobal;
+            let accuracyGlobal;
+            let rows = [];
+
+            class iteration
+            {
+                constructor(iterationNumber, a, b)
+                {
+                    this.iterationNumber = iterationNumber;
+                    this.a = a;
+                    this.b = b;
+                }
+
+                mid(){ return (this.a + this.b) / 2; }
+                f_a(){ return solveEquation(this.a); }
+                f_b(){ return solveEquation(this.b); }
+                f_mid(){ return solveEquation(this.mid()); }
+                maxError(){ return Math.abs(this.b-this.mid());}
+
+            }
+
+            solveEquation = function(x)
+            {
+                var newX = x.toString();
+                var replaceX = "(" + newX + ")";
+                var newEq = equationGlobal.replace(/x/g, replaceX);
+                return math.evaluate(newEq);
+            }
+
+            IVPtest = function()
+            {
+                let f_a = solveEquation(aGlobal);
+                let f_b = solveEquation(bGlobal);
+
+                if( (f_a < 0 && f_b > 0) || (f_a > 0 && f_b < 0) ) return true;
+                else return false;
+            }
+
+            maxNumberOfIterations = function()
+            {
+                let n = Math.ceil((Math.log(bGlobal - aGlobal) - Math.log(accuracyGlobal)) / Math.log(2));
+                return n;
+            }
+
+            errorAfterNIterations = function(x)
+            {
+                var result = Math.abs((bGlobal - aGlobal) / Math.pow(2,x));
+                return "Error after " + x + " iterations would be: " + result;
+            }
+            
+            bisectionMethod = function()
+            {
+                var x = aGlobal;
+                var y = bGlobal;
+                let IVP = IVPtest();
+                let iterations = maxNumberOfIterations();
+
+                let i = 1;
+
+                if(IVP === true)
+                {
+                    while(i <= iterations)
+                    {
+                        rows[i] = new iteration(i, x, y);
+                        if((rows[i].f_a() > 0 && rows[i].f_mid() < 0) || (rows[i].f_a() < 0 && rows[i].f_mid() > 0))
+                        {
+                            x = rows[i].a;
+                            y = rows[i].mid();
+                        }
+                        else
+                        {
+                            x = rows[i].mid();
+                            y = rows[i].b;               
+                        }    
+                        i++; 
+                    }
+                }
+                else
+                {
+                    console.log("IVP test failed, the function you entered is not contineous.");
+                }
+            }
+            
+            printRows = function()
+            {
+                let strOfRows = " ";
+                let j = maxNumberOfIterations(a,b);
+
+                for(var i=1 ; i<=j ; i++) strOfRows += JSON.stringify(rows[i]);
+    
+                return strOfRows;
+            }
+
+            printTable = function()
+            {
+                let table = "<table style=width:100%> <tr> <th><i>i</i></th> <th>a</th> <th>b</th> <th>mid</th> <th>f(a)</th> <th>f(b)</th> <th>f(mid)</th> <th>max error</th> </tr>";
+                rows.forEach(function (item){
+                    table += "<tr><td>" + item.iterationNumber + "</td>";
+                    table += "<td>" + item.a + "</td>";
+                    table += "<td>" + item.b + "</td>";
+                    table += "<td>" + item.mid() + "</td>";
+                    table += "<td>" + item.f_a() + "</td>";
+                    table += "<td>" + item.f_b() + "</td>";
+                    table += "<td>" + item.f_mid() + "</td>";
+                    table += "<td>" + item.maxError() + "</td></tr>";
+                    })
+                table += "</table>";
+                return table;
+            }
+
+            formatEquation = function()
+            {
+                
+            }
+
+            main = function(){
+                let equation = document.getElementById("eq").value;
+                let a = Number(document.getElementById('from').value);
+                let b = Number(document.getElementById('to').value);
+                let accuracy = Number(document.getElementById('accuracy').value);
+
+                equationGlobal = equation;
+                aGlobal = a;
+                bGlobal = b;
+                accuracyGlobal = accuracy;
+
+                let range = a.toString() + " < <i> x </i> < " + b.toString();
+
+                var IVPresult;
+                var IVP = IVPtest();
+                if(IVP === true) IVPresult = "IVP test: Function satisfies IVP test, hence its contineous.";
+                else IVPresult = "IVP test: Function doesn't satisfy IVP test, hence its not contineous."
+
+                var maxI = maxNumberOfIterations();
+                var maxIResult = "Max number of iterations <i>n</i> > | ln(<i>b-a</i>) - ln(<i>t</i>) / ln(2) | : " + maxI;
+                
+                var errorAfterI = errorAfterNIterations(maxI);
+
+                bisectionMethod();
+
+                console.log(rows);
+
+                document.getElementById('equation').innerHTML = "<i>f(x)</i> : " + equation + "<br>" + "Range: " + range + "<br>" + IVPresult + "<br>" + maxIResult + "<br>" + errorAfterI;
+                document.getElementById('table').innerHTML = printTable();
+            }
+
+
+        </script>
+
+        <style>
+            table, th, td {
+                border: 1px solid black;
+            }
+            h1{
+                text-align : center;
+                font-family: 'Poppins', sans-serif;
+            }
+            .footer {
+                position: fixed;
+                left: 0;
+                bottom: 0;
+                width: 100%;
+                background-color:#F0E68C;
+                color: black;
+                text-align: center;
+            }
+            .clear { clear: both; height: 500px; }
+        </style>
+
+    </head>
+
+    <body>
+
+        <h1>Bisection Method</h1> <br>
+
+        <label for='cube'>Function : </label>
+        <input type='text' id='eq' name='Cube Coefficient'> <br><br>
+          
+        <label for='from'>For range from : </label>
+        <input type='number' id='from' name='For range from'>
+
+        <label for='to'> To : </label>
+        <input type='number' id='to' name='To'> <br><br>
+
+        <label for='accuracy'>Accuracy : </label>
+        <input type='number' id='accuracy' name='Accuracy'> <br><br>
+
+        <p><b>Important</b> : Keep '<i>x</i>' the variable of your function.</p>
+        
+        <br>
+
+        <button onclick="main()">Calculate</button>
+
+        <br>
+
+        <p id = 'equation'>Your equation wil display here.</p>
+
+        <br>
+        <p id = 'table'>Here you will see the output of Bisection Method.</p>
+
+        <div class="clear"></div>
+        <div class="footer">
+            <p>Created by Hamza Hussain at SZABIST Karachi, For course of Numerical Computing, taught by Sir Khurram Raza in Fall of 2020.</p> 
+                <p>Open source library used: mathjs version 7.5.1. </p>
+        </div>
+
+
+    </body>
+</html>
